@@ -5,7 +5,7 @@ This is the basic structure of the firewall project we will be working on.
 
   
 ##  Setup Instructions
-Please install the required dependencies listed in `requirements.txt` before running the project.
+Please install the required dependencies before running the project.
 
 
 ##  How to Run the Project
@@ -14,13 +14,13 @@ Please install the required dependencies listed in `requirements.txt` before run
 ```bash
 cd backend_app
 python app.py
-
+```
 ### 🔹 Run the WAF
 
 ```bash
 cd waf
 python app.py
-
+```
 
 #  Server Info
 Both servers will run on localhost for now.
