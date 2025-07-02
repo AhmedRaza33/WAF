@@ -10,6 +10,10 @@ from proxy import forward_to_backend
 mongo_logger = MongoLogger()
 
 model = joblib.load("ml_model/waf_attack_model.pkl")
+MAX_REQUESTS = 2      # requests
+WINDOW = 60           # seconds
+BLOCK_TIME = 60       # seconds
+
 def extract_live_features(req):
     """
     Extracts 9 features from a live Flask request for ML model input.
@@ -50,6 +54,17 @@ for fname in os.listdir(PLUGIN_FOLDER):
 
 @app.before_request
 def waf_filter():
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    # 1. Check if IP is blocked
+    if mongo_logger.is_ip_blocked(ip):
+        abort(429, "Too many requests. Try again later.")
+
+    # 2. Increment request count and check limit
+    req_count = mongo_logger.increment_request_count(ip, WINDOW)
+    if req_count > MAX_REQUESTS:
+        mongo_logger.block_ip(ip, BLOCK_TIME)
+        abort(429, "Too many requests. Try again later.")
+
     print(f"[WAF] Checking path: {request.path}")
     print(f"[WAF] User-Agent: {request.headers.get('User-Agent')}")
     features = extract_live_features(request)

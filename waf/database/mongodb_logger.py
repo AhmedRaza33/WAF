@@ -1,7 +1,8 @@
 # mongo_logger.py
 from pymongo import MongoClient
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
+
 
 class MongoLogger:
     def __init__(self, uri="mongodb://localhost:27017", db_name="waf_logs", collection_name="requests"):
@@ -34,5 +35,33 @@ class MongoLogger:
             "features_used": features,
             "tags": tags or []
         }
+
+        
         log_entry = self._to_python_type(log_entry)
         self.collection.insert_one(log_entry)
+
+    def is_ip_blocked(self, ip):
+        now = datetime.utcnow()
+        entry = self.client['waf_logs']['blocked_ips'].find_one({"ip": ip, "unblock_time": {"$gt": now}})
+        return entry is not None
+
+    def block_ip(self, ip, duration_seconds):
+        unblock_time = datetime.utcnow() + timedelta(seconds=duration_seconds)
+        self.client['waf_logs']['blocked_ips'].update_one(
+            {"ip": ip},
+            {"$set": {"ip": ip, "unblock_time": unblock_time}},
+            upsert=True
+        )
+
+    def increment_request_count(self, ip, window_seconds):
+        now = datetime.utcnow()
+        window_start = now - timedelta(seconds=window_seconds)
+        req_coll = self.client['waf_logs']['ip_requests']
+        # Remove old requests
+        req_coll.delete_many({"ip": ip, "timestamp": {"$lt": window_start}})
+        # Insert new request
+        req_coll.insert_one({"ip": ip, "timestamp": now})
+        # Count requests in window
+        count = req_coll.count_documents({"ip": ip, "timestamp": {"$gte": window_start}})
+        return count
+

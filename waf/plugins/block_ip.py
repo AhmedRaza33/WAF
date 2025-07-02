@@ -2,7 +2,7 @@
 
 # List of blocked IP addresses
 BLOCKED_IPS = {
-    "10.7.144.199",  # Example IP, replace with actual IPs to block
+    "10.7.144.198",  # Example IP, replace with actual IPs to block
     # Add more IPs as needed
 }
 
