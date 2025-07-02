@@ -1,4 +1,4 @@
-from flask import Flask, request, abort
+from flask import Flask, request, abort, make_response
 import requests
 import os
 import pandas as pd
@@ -43,9 +43,10 @@ for fname in os.listdir(PLUGIN_FOLDER):
     if fname.endswith(".py"):
         path = os.path.join(PLUGIN_FOLDER, fname)
         spec = importlib.util.spec_from_file_location(fname[:-3], path)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        plugins.append(mod)
+        if spec and spec.loader:
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            plugins.append(mod)
 
 @app.before_request
 def waf_filter():
@@ -79,6 +80,6 @@ def waf_filter():
 @app.route('/', defaults={'path': ''}, methods=["GET", "POST", "PUT", "DELETE"])
 @app.route('/<path:path>', methods=["GET", "POST", "PUT", "DELETE"])
 def proxy(path):
-    return forward_to_backend(path)
+    return make_response(forward_to_backend(path))
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
