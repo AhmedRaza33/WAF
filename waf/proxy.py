@@ -23,10 +23,8 @@ def forward_to_backend(path):
             cookies=request.cookies,
             allow_redirects=False
         )
-        mongo_logger.log(request, resp.status_code, reason="Allowed")
         return resp.content, resp.status_code, resp.headers.items()
     except requests.RequestException as e:
         error_message = f"Backend unreachable or error: {str(e)}"
-        mongo_logger.log(request, 502, reason=error_message)
         return Response(error_message, status=502)
 
