@@ -16,6 +16,9 @@ flow_stats = {}
 
 rule_engine = RuleEngine("rules.yaml")
 app = Flask(__name__)
+MAX_REQUESTS = 2      # requests
+WINDOW = 60           # seconds
+BLOCK_TIME = 60       # seconds
 
 PLUGIN_FOLDER = os.path.join(os.path.dirname(__file__), "plugins")
 plugins = []
@@ -25,12 +28,27 @@ for fname in os.listdir(PLUGIN_FOLDER):
     if fname.endswith(".py"):
         path = os.path.join(PLUGIN_FOLDER, fname)
         spec = importlib.util.spec_from_file_location(fname[:-3], path)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        plugins.append(mod)
+        if spec and spec.loader:
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            plugins.append(mod)
 
 @app.before_request
 def waf_filter():
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    # 1. Check if IP is blocked
+    if mongo_logger.is_ip_blocked(ip):
+        print(f"This Ip is Blocked!!!")
+        abort(429, "Too many requests. Try again later.")
+        
+
+    # 2. Increment request count and check limit
+    req_count = mongo_logger.increment_request_count(ip, WINDOW)
+    if req_count > MAX_REQUESTS:
+        mongo_logger.block_ip(ip, BLOCK_TIME)
+        print(f"Too many requests!!!")
+        abort(429, "Too many requests. Try again later.")
+        
     print(f"[WAF] Checking path: {request.path}")
     print(f"[WAF] User-Agent: {request.headers.get('User-Agent')}")
     features = extract_live_features_from_request(request)

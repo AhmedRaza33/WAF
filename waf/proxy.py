@@ -27,4 +27,3 @@ def forward_to_backend(path):
     except requests.RequestException as e:
         error_message = f"Backend unreachable or error: {str(e)}"
         return Response(error_message, status=502)
-

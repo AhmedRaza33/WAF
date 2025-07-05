@@ -75,15 +75,15 @@ def extract_live_features_from_request(req, interface="\\Device\\NPF_Loopback", 
             "Flow Packets/s": 0
         }
     try:
-        # Sniff packets for a short duration
+        #Sniff packets for a short duration
         sniff(iface=interface, prn=process_packet, timeout=sniff_duration, count=10)
-        # Try to find a flow matching the request's remote_addr
+         #Try to find a flow matching the request's remote_addr
         src_ip = req.remote_addr
-        # This is a best-effort guess; you may want to refine this logic
-        #for key in flows:
-        #    if key[0] == src_ip or key[1] == src_ip:
-        #        return extract_features(key)
-        # If no matching flow, return default
+         # This is a best-effort guess; you may want to refine this logic
+        for key in flows:
+             if key[0] == src_ip or key[1] == src_ip:
+                return extract_features(key)
+        #  If no matching flow, return default
         return {
             "Flow Duration":5001052,
             "Tot Fwd Pkts": 4,
