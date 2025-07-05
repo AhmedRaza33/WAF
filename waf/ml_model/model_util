@@ -1,5 +1,0 @@
-# ml_model/model_utils.py
-import joblib
-
-def load_model(path="waf_attack_model.pkl"):
-    return joblib.load(path)
