@@ -1,0 +1,19 @@
+{
+  "description": "Network flow-based WAF attack detector",
+  "training_data": "TrafficLabelling dataset",
+  "features": "Network flow statistics",
+  "accuracy": 0.95,
+  "created_at": "2024-06-01T00:00:00",
+  "version": "v1.0.0",
+  "feature_names": [
+    "Flow Duration",
+    "Tot Fwd Pkts",
+    "Tot Bwd Pkts",
+    "TotLen Fwd Pkts",
+    "Fwd Pkt Len Min",
+    "TotLen Bwd Pkts",
+    "Bwd Pkt Len Min",
+    "Flow Byts/s",
+    "Flow Pkts/s"
+  ]
+}

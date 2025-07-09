@@ -55,3 +55,4 @@ rules:
   pattern: (?i)(user_id|account_id|profile_id)=\d+
   action: log
   description: Potential IDOR - sensitive IDs in URL
+  

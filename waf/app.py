@@ -2,16 +2,15 @@ from flask import Flask, request, abort
 import requests
 import os
 import pandas as pd
-import joblib
 import importlib.util
 from rules.rule_engine import RuleEngine
 from database.mongodb_logger import MongoLogger
 from proxy import forward_to_backend
 mongo_logger = MongoLogger()
 from feature_extractor import extract_live_features_from_request
-from scapy.all import sniff, IP, TCP
+from ml_model.enhanced_ml_manager import EnhancedMLModelManager
 import time
-model = joblib.load("ml_model/waf_attack_model.pkl")
+
 flow_stats = {}
 
 rule_engine = RuleEngine("rules.yaml")
@@ -33,6 +32,10 @@ for fname in os.listdir(PLUGIN_FOLDER):
             spec.loader.exec_module(mod)
             plugins.append(mod)
 
+# Initialize Enhanced ML Manager
+ml_manager = EnhancedMLModelManager(models_dir="ml_model")
+ml_manager.set_current_model("v1.0.0")
+
 @app.before_request
 def waf_filter():
     ip = request.headers.get("X-Forwarded-For", request.remote_addr)
@@ -52,7 +55,6 @@ def waf_filter():
     print(f"[WAF] Checking path: {request.path}")
     print(f"[WAF] User-Agent: {request.headers.get('User-Agent')}")
     features = extract_live_features_from_request(request)
-    df = pd.DataFrame([features])  # ML model expects a DataFrame
 
     blocked = False
     reason = "Allowed"
@@ -60,11 +62,19 @@ def waf_filter():
     is_plugin_blocked = False
     rule_id = None
 
-    ml_prediction = model.predict(df)[0]  # 1 = attack, 0 = safe
+    # Prepare request_data for ML manager
+    request_data = {
+        "url": request.path,
+        "method": request.method,
+        "remote_addr": request.remote_addr,
+        "headers": dict(request.headers),
+        "body": request.get_data(as_text=True)
+    }
+    prediction_result = ml_manager.predict(request_data)
     print(f"[ML] Extracted Features: {features}")
-    print(f"[ML] Prediction: {ml_prediction}")
+    print(f"[ML] Prediction: {prediction_result.is_malicious}, Confidence: {prediction_result.confidence}")
 
-    if ml_prediction == 1:
+    if prediction_result.is_malicious:
         blocked = True
         reason = "Blocked by ML model"
     else:
@@ -88,7 +98,7 @@ def waf_filter():
         request,
         blocked=blocked,
         reason=reason,
-        ml_prediction=ml_prediction,
+        ml_prediction=prediction_result.to_dict(),
         is_plugin_blocked=is_plugin_blocked,
         features=features
     )

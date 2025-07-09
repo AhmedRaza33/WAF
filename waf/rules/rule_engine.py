@@ -6,7 +6,7 @@ import re
 class RuleEngine:
     def __init__(self, rules_file="rules.yaml"):
         rules_path = os.path.join(os.path.dirname(__file__), rules_file)
-        with open(rules_path, "r") as f:
+        with open(rules_path, encoding='utf-8') as f:
             loaded = yaml.safe_load(f)
             if isinstance(loaded, dict) and "rules" in loaded:
                 self.rules = loaded["rules"]
