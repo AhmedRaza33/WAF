@@ -3,7 +3,7 @@
   "training_data": "Dummy data",
   "features": "Network flow statistics",
   "accuracy": 0.5,
-  "created_at": "2025-08-01T01:23:46.716564",
+  "created_at": "2025-07-31T21:57:43.938503+00:00",
   "version": "v1.0.0",
   "feature_names": [
     "Flow Duration",

@@ -11,7 +11,38 @@ from ml_model.enhanced_ml_manager import EnhancedMLModelManager
 
 # Initialize enhanced ML manager
 ml_manager = EnhancedMLModelManager(models_dir="ml_model")
-ml_manager.set_current_model("v1.0.0")  # Set your actual model version here
+
+# List available models and set the first one as current
+available_models = ml_manager.list_models()
+if available_models:
+    ml_manager.set_current_model(available_models[0])
+    print(f"Using model version: {available_models[0]}")
+else:
+    print("No models available. Creating a dummy model for testing...")
+    # Create a simple dummy model for testing
+    from sklearn.ensemble import RandomForestClassifier
+    import numpy as np
+    
+    # Create a dummy model
+    dummy_model = RandomForestClassifier(n_estimators=10, random_state=42)
+    # Train on dummy data
+    X_dummy = np.random.rand(100, 9)  # 9 features as expected
+    y_dummy = np.random.randint(0, 2, 100)
+    dummy_model.fit(X_dummy, y_dummy)
+    
+    # Register the dummy model
+    ml_manager.register_model(
+        version="v1.0.0",
+        model=dummy_model,
+        metadata={
+            'description': 'Dummy WAF attack detector for testing',
+            'training_data': 'Dummy data',
+            'features': 'Network flow statistics',
+            'accuracy': 0.5
+        }
+    )
+    ml_manager.set_current_model("v1.0.0")
+    print("Dummy model created and set as current")
 
 # Load mongodb logger
 mongo_logger = MongoLogger()

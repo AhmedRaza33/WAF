@@ -1,6 +1,6 @@
 # mongo_logger.py
 from pymongo import MongoClient
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import numpy as np
 
 
@@ -21,7 +21,7 @@ class MongoLogger:
 
     def log(self, request, blocked, reason=None, ml_prediction=None, is_plugin_blocked=False, features=None, tags=None):
         log_entry = {
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
             "path": request.path,
             "method": request.method,
             "user_agent": request.headers.get("User-Agent", ""),
@@ -41,12 +41,12 @@ class MongoLogger:
         self.collection.insert_one(log_entry)
 
     def is_ip_blocked(self, ip):
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         entry = self.client['waf_logs']['blocked_ips'].find_one({"ip": ip, "unblock_time": {"$gt": now}})
         return entry is not None
 
     def block_ip(self, ip, duration_seconds):
-        unblock_time = datetime.utcnow() + timedelta(seconds=duration_seconds)
+        unblock_time = datetime.now(timezone.utc) + timedelta(seconds=duration_seconds)
         self.client['waf_logs']['blocked_ips'].update_one(
             {"ip": ip},
             {"$set": {"ip": ip, "unblock_time": unblock_time}},
@@ -54,7 +54,7 @@ class MongoLogger:
         )
 
     def increment_request_count(self, ip, window_seconds):
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         window_start = now - timedelta(seconds=window_seconds)
         req_coll = self.client['waf_logs']['ip_requests']
         # Remove old requests

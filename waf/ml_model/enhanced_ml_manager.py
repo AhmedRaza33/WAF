@@ -3,7 +3,7 @@ import pickle
 import hashlib
 import logging
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass, asdict
 from pathlib import Path
@@ -207,7 +207,7 @@ class EnhancedMLModelManager:
                         self.models[version_dir.name] = {
                             'model': model,
                             'metadata': metadata,
-                            'loaded_at': datetime.now()
+                            'loaded_at': datetime.now(timezone.utc)
                         }
                         
                         logger.info(f"Loaded model version {version_dir.name}")
@@ -224,7 +224,7 @@ class EnhancedMLModelManager:
         joblib.dump(model, model_path)
         
         # Save metadata
-        metadata['created_at'] = datetime.now().isoformat()
+        metadata['created_at'] = datetime.now(timezone.utc).isoformat()
         metadata['version'] = version
         metadata['feature_names'] = self.feature_names
         
@@ -235,7 +235,7 @@ class EnhancedMLModelManager:
         self.models[version] = {
             'model': model,
             'metadata': metadata,
-            'loaded_at': datetime.now()
+            'loaded_at': datetime.now(timezone.utc)
         }
         
         logger.info(f"Registered new model version {version}")
@@ -279,7 +279,7 @@ class EnhancedMLModelManager:
             confidence=confidence,
             model_version=self.current_model_version,
             features_used=features,
-            prediction_time=datetime.now(),
+            prediction_time=datetime.now(timezone.utc),
             request_hash=request_hash
         )
         

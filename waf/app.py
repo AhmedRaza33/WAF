@@ -15,9 +15,9 @@ flow_stats = {}
 
 rule_engine = RuleEngine("rules.yaml")
 app = Flask(__name__)
-MAX_REQUESTS = 2      # requests
+MAX_REQUESTS = 4      # requests
 WINDOW = 60           # seconds
-BLOCK_TIME = 60       # seconds
+BLOCK_TIME = 30       # seconds
 
 PLUGIN_FOLDER = os.path.join(os.path.dirname(__file__), "plugins")
 plugins = []
